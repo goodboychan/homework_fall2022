@@ -42,7 +42,9 @@ class PGAgent(BaseAgent):
         # TODO: update the PG actor/policy using the given batch of data 
         # using helper functions to compute qvals and advantages, and
         # return the train_log obtained from updating the policy
-
+        q_values = self.calculate_q_vals(rewards_list)
+        advantages = self.estimate_advantage(observations, rewards_list, q_values, terminals)
+        train_log = self.actor.update(observations, actions, advantages, q_values)
         return train_log
 
     def calculate_q_vals(self, rewards_list):
@@ -154,7 +156,8 @@ class PGAgent(BaseAgent):
 
             Output: list where each index t contains sum_{t'=0}^T gamma^t' r_{t'}
         """
-
+        rollout_length = len(rewards)
+        list_of_discounted_returns = [(self.gamma ** t) * rewards[t] for t in range(rollout_length)]
         return list_of_discounted_returns
 
     def _discounted_cumsum(self, rewards):
@@ -163,5 +166,7 @@ class PGAgent(BaseAgent):
             -takes a list of rewards {r_0, r_1, ..., r_t', ... r_T},
             -and returns a list where the entry in each index t' is sum_{t'=t}^T gamma^(t'-t) * r_{t'}
         """
+        rollout_length = len(rewards)
+        list_of_discounted_cumsums = [sum(self._discounted_return(rewards[:t])) for t in range(rollout_length)]
 
         return list_of_discounted_cumsums
